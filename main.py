@@ -12,7 +12,7 @@ def menu_consola():
 
     match op:
         case 1:
-            vec.imp()
+            vec.diagnostico_vectores()
         case 2:
             print()
         case 3:
