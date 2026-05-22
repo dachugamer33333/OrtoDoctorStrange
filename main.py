@@ -1,4 +1,6 @@
 import logica.vectores as vec
+import logica.polinomios as pol
+import logica.matrices as mat
 
 def menu_consola():
     print("||Menu Consola||")
@@ -14,9 +16,9 @@ def menu_consola():
         case 1:
             vec.diagnostico_vectores()
         case 2:
-            print()
+            pol.diagnostico_polinomios()
         case 3:
-            print()
+            mat.diagnostico_matrices()
 
 if __name__ == "__main__":
     menu_consola()

@@ -12,11 +12,11 @@ def proseso_ortogonal(conjunto_vectores):
     return True
 def proseso_ortonormal(conjunto_vectores,ortogonal):
     if ortogonal:
-         for v in conjunto_vectores:
+        for v in conjunto_vectores:
             norma = np.linalg.norm(v)
             if not np.isclose(norma, 1):
                 return False
-            return True
+        return True
     else:
         return False
 
