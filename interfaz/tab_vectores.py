@@ -5,9 +5,8 @@ from logica import vectores as vec
 
 
 def crear_tab_vectores(tabview):
-    tab = tabview.add("Rⁿ")
+    tab = tabview.add("R\u207f")
 
-    # --- INPUT ---
     ctk.CTkLabel(tab, text="Vectores (formato Python):",
                  font=ctk.CTkFont(size=14)).pack(anchor="w", padx=10, pady=(10, 0))
 
@@ -18,7 +17,6 @@ def crear_tab_vectores(tabview):
     btn = ctk.CTkButton(tab, text="Diagnosticar")
     btn.pack(pady=5)
 
-    # --- RESULTS ---
     results = ctk.CTkScrollableFrame(tab)
     results.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
@@ -29,47 +27,46 @@ def crear_tab_vectores(tabview):
         raw = input_text.get("1.0", "end-1c").strip()
         try:
             vectors = ast.literal_eval("[" + raw + "]")
-            if not isinstance(vectors, list) or any(not isinstance(v, (list, tuple)) for v in vectors):
+            if not isinstance(vectors, list):
+                raise ValueError
+            if len(vectors) == 0:
+                raise ValueError("lista vacia")
+            if any(not isinstance(v, (list, tuple)) for v in vectors):
                 raise ValueError
             matriz = np.array(vectors, dtype=float)
+            if matriz.ndim != 2 or matriz.shape[0] < 1:
+                raise ValueError
+            d = vec.diagnosticar_vectores(matriz)
         except Exception:
             ctk.CTkLabel(results, text="Error: formato invalido. Usa: [1,3,0], [1,1,0], [2,0,1]",
                          text_color="red").pack(anchor="w")
             return
 
-        num = matriz.shape[0]
-        dim = matriz.shape[1]
-        rango = np.linalg.matrix_rank(matriz)
-        li = rango == num
-        gen = rango == dim
-        base = li and gen
-        ort = vec.proseso_ortogonal(matriz)
-        orton = vec.proseso_ortonormal(matriz, ort)
+        rango, li, gen, base = d["rango"], d["li"], d["gen"], d["base"]
+        ort, orton = d["ortogonal"], d["ortonormal"]
 
-        # --- Propiedades ---
         ctk.CTkLabel(results, text="Propiedades:", font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
         prop_frame = ctk.CTkFrame(results)
         prop_frame.pack(fill="x", pady=2)
 
-        def prop_row(parent, col, label, value, ok):
+        def prop_row(parent, row, col, label, value, ok):
             f = ctk.CTkFrame(parent)
-            f.grid(row=0, column=col, padx=10, pady=2, sticky="w")
+            f.grid(row=row, column=col, padx=10, pady=2, sticky="w")
             ctk.CTkLabel(f, text=f"{label}:", width=90, anchor="w").pack(side="left")
             c = "#1a8a1a" if ok else "#cc3333"
             ctk.CTkLabel(f, text=value, text_color=c, font=ctk.CTkFont(size=12, weight="bold")).pack(side="left")
 
-        prop_row(prop_frame, 0, "Rango", str(rango), True)
-        prop_row(prop_frame, 1, "L.I.", "\u2714" if li else "\u2718", li)
-        prop_row(prop_frame, 0, "Generador", "\u2714" if gen else "\u2718", gen)
-        prop_row(prop_frame, 1, "Base", "\u2714" if base else "\u2718", base)
-        prop_row(prop_frame, 0, "Ortogonal", "\u2714" if ort else "\u2718", ort)
-        prop_row(prop_frame, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
+        prop_row(prop_frame, 0, 0, "Rango", str(rango), True)
+        prop_row(prop_frame, 0, 1, "L.I.", "\u2714" if li else "\u2718", li)
+        prop_row(prop_frame, 1, 0, "Generador", "\u2714" if gen else "\u2718", gen)
+        prop_row(prop_frame, 1, 1, "Base", "\u2714" if base else "\u2718", base)
+        prop_row(prop_frame, 2, 0, "Ortogonal", "\u2714" if ort else "\u2718", ort)
+        prop_row(prop_frame, 2, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
 
         if not base:
             return
 
         if not ort:
-            # --- Ortogonalizacion ---
             ctk.CTkLabel(results, text="").pack()
             ctk.CTkLabel(results, text="Ortogonalizacion (Gram-Schmidt):",
                          font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
@@ -84,7 +81,6 @@ def crear_tab_vectores(tabview):
             ctk.CTkLabel(results, text=f"  \u2714 Son ortogonales" if verif else f"  \u2718 No son ortogonales",
                          text_color=c_color).pack(anchor="w")
 
-            # --- Ortonormalizacion ---
             ctk.CTkLabel(results, text="Ortonormalizacion:",
                          font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
             ortonormales = vec.ortonormalizar(matriz)
