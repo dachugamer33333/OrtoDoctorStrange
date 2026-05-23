@@ -1,4 +1,4 @@
-import ast
+import re
 import numpy as np
 import customtkinter as ctk
 from logica import matrices as mat
@@ -12,6 +12,37 @@ def _fmt_matriz_compacto(M):
     for row in M:
         rows.append("[" + " ".join(f"{x:7.4f}" for x in row) + "]")
     return "  " + "\n  ".join(rows)
+
+
+def _parsear_matrices(raw):
+    """
+    Acepta formato legible:
+        [1 2; 3 4]
+        [5 6; 7 8]
+    o separados por comas en una sola línea:
+        [1 2; 3 4], [5 6; 7 8]
+    Valores separados por espacios o comas; filas separadas por ';'.
+    """
+    bloques = re.findall(r'\[([^\[\]]+)\]', raw)
+    if not bloques:
+        raise ValueError("No se encontraron matrices con formato [fila1; fila2]")
+    matrices = []
+    for bloque in bloques:
+        filas_str = [f.strip() for f in bloque.split(';')]
+        matriz = []
+        for fila in filas_str:
+            vals = [float(x) for x in re.split(r'[,\s]+', fila.strip()) if x]
+            if not vals:
+                raise ValueError
+            matriz.append(vals)
+        matrices.append(matriz)
+    return matrices
+
+
+def _ejemplo_formato(m, n):
+    fila = " ".join(["0"] * n)
+    filas = "; ".join([fila] * m)
+    return f"[{filas}]"
 
 
 def crear_tab_matrices(tabview):
@@ -30,11 +61,32 @@ def crear_tab_matrices(tabview):
     n_entry = ctk.CTkEntry(dim_frame, textvariable=n_var, width=60)
     n_entry.pack(side="left", padx=5)
 
-    ctk.CTkLabel(tab, text="Matrices (formato Python):",
+    ctk.CTkLabel(tab, text="Matrices — una por l\u00ednea: [fila1; fila2; ...]",
                  font=ctk.CTkFont(size=14)).pack(anchor="w", padx=10, pady=(10, 0))
-    input_text = ctk.CTkTextbox(tab, height=70)
+
+    input_text = ctk.CTkTextbox(tab, height=100)
     input_text.pack(fill="x", padx=10, pady=5)
-    input_text.insert("1.0", "[[1,0],[0,0]], [[1,1],[0,0]], [[1,1],[1,0]], [[1,1],[1,1]]")
+    input_text.insert("1.0", "[1 0; 0 0]\n[1 1; 0 0]\n[1 1; 1 0]\n[1 1; 1 1]")
+
+    hint_label = ctk.CTkLabel(tab, text="", font=ctk.CTkFont(size=11), text_color="gray")
+    hint_label.pack(anchor="w", padx=10)
+
+    def actualizar_hint(*args):
+        try:
+            m_v = int(m_var.get())
+            n_v = int(n_var.get())
+            if m_v < 1 or n_v < 1:
+                return
+            ej = _ejemplo_formato(m_v, n_v)
+            hint_label.configure(
+                text=f"Formato: {ej}   \u2502   filas separadas por ';', valores por espacios o comas"
+            )
+        except ValueError:
+            pass
+
+    m_var.trace_add("write", actualizar_hint)
+    n_var.trace_add("write", actualizar_hint)
+    actualizar_hint()
 
     ctk.CTkLabel(tab, text="Ctrl+Enter para diagnosticar",
                  font=ctk.CTkFont(size=11), text_color="gray").pack(anchor="e", padx=10)
@@ -81,21 +133,22 @@ def crear_tab_matrices(tabview):
 
         raw = input_text.get("1.0", "end-1c").strip()
         try:
-            matrices = ast.literal_eval("[" + raw + "]")
-            if not isinstance(matrices, list) or len(matrices) == 0:
-                raise ValueError
-            if any(not isinstance(M, (list, tuple)) for M in matrices):
-                raise ValueError
+            matrices = _parsear_matrices(raw)
+            if len(matrices) == 0:
+                raise ValueError("lista vacia")
             arr = np.array(matrices, dtype=float)
-            if arr.ndim != 3 or arr.shape[0] < 1:
+            if arr.ndim != 3:
                 raise ValueError
             if arr.shape[1] != m or arr.shape[2] != n_val:
                 ctk.CTkLabel(results,
-                             text=f"Error: cada matriz debe ser {m}x{n_val}",
+                             text=f"Error: cada matriz debe ser {m}\u00d7{n_val} "
+                                  f"({m} fila{'s' if m!=1 else ''}, {n_val} columna{'s' if n_val!=1 else ''})",
                              text_color=RED).pack(anchor="w")
                 return
-        except (ValueError, SyntaxError):
-            ctk.CTkLabel(results, text="Error: formato invalido.",
+        except (ValueError, TypeError):
+            ej = _ejemplo_formato(m, n_val)
+            ctk.CTkLabel(results,
+                         text=f"Error: formato invalido.\nUsa una matriz por linea: {ej}",
                          text_color=RED).pack(anchor="w")
             return
 
@@ -110,7 +163,7 @@ def crear_tab_matrices(tabview):
         ort, orton = d["ortogonal"], d["ortonormal"]
 
         ctk.CTkLabel(results,
-                     text=f"Analizando {num} matri{'ces' if num != 1 else 'z'} en M{m}x{n_val}",
+                     text=f"Analizando {num} matri{'ces' if num != 1 else 'z'} en M{m}\u00d7{n_val}",
                      font=ctk.CTkFont(size=12), text_color="gray").pack(anchor="w", pady=(2, 0))
 
         ctk.CTkLabel(results, text="Matrices dadas:",
