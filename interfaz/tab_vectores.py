@@ -10,6 +10,14 @@ RED = "#cc3333"
 def crear_tab_vectores(tabview):
     tab = tabview.add("R\u207f")
 
+    dim_frame = ctk.CTkFrame(tab)
+    dim_frame.pack(fill="x", padx=10, pady=(10, 0))
+    ctk.CTkLabel(dim_frame, text="Dimension del espacio (R\u207f):  n =",
+                 font=ctk.CTkFont(size=14)).pack(side="left")
+    n_var = ctk.StringVar(value="3")
+    n_entry = ctk.CTkEntry(dim_frame, textvariable=n_var, width=60)
+    n_entry.pack(side="left", padx=5)
+
     ctk.CTkLabel(tab, text="Vectores (formato Python):",
                  font=ctk.CTkFont(size=14)).pack(anchor="w", padx=10, pady=(10, 0))
 
@@ -48,6 +56,17 @@ def crear_tab_vectores(tabview):
         for w in results.winfo_children():
             w.destroy()
 
+        try:
+            n = int(n_var.get())
+            if n < 1:
+                ctk.CTkLabel(results, text="Error: n debe ser un entero positivo.",
+                             text_color=RED).pack(anchor="w")
+                return
+        except ValueError:
+            ctk.CTkLabel(results, text="Error: n debe ser un numero entero.",
+                         text_color=RED).pack(anchor="w")
+            return
+
         raw = input_text.get("1.0", "end-1c").strip()
         try:
             vectors = ast.literal_eval("[" + raw + "]")
@@ -58,6 +77,11 @@ def crear_tab_vectores(tabview):
             matriz = np.array(vectors, dtype=float)
             if matriz.ndim != 2 or matriz.shape[0] < 1:
                 raise ValueError
+            if matriz.shape[1] != n:
+                ctk.CTkLabel(results,
+                             text=f"Error: cada vector debe tener {n} componentes para R{n}",
+                             text_color=RED).pack(anchor="w")
+                return
         except (ValueError, SyntaxError):
             ctk.CTkLabel(results, text="Error: formato invalido. Usa: [1,3,0], [1,1,0], [2,0,1]",
                          text_color=RED).pack(anchor="w")
@@ -74,7 +98,7 @@ def crear_tab_vectores(tabview):
         ort, orton = d["ortogonal"], d["ortonormal"]
 
         ctk.CTkLabel(results,
-                     text=f"Analizando {num} vector{'es' if num != 1 else ''} en \u211d{dim}",
+                     text=f"Analizando {num} vector{'es' if num != 1 else ''} en \u211d{n}",
                      font=ctk.CTkFont(size=12), text_color="gray").pack(anchor="w", pady=(2, 0))
 
         ctk.CTkLabel(results, text="Propiedades:",
@@ -89,7 +113,7 @@ def crear_tab_vectores(tabview):
         prop_row(prop_frame, 2, 0, "Ortogonal", "\u2714" if ort else "\u2718", ort)
         prop_row(prop_frame, 2, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
 
-        if base:
+        if li:
             ctk.CTkLabel(results, text="").pack()
             ctk.CTkLabel(results, text="Ortogonalizacion (Gram-Schmidt):",
                          font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))

@@ -123,7 +123,7 @@ def crear_tab_polinomios(tabview):
         prop_row(prop_frame, 2, 0, "Ortogonal", "\u2714" if ort else "\u2718", ort)
         prop_row(prop_frame, 2, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
 
-        if base:
+        if li:
             ctk.CTkLabel(results, text="").pack()
             ctk.CTkLabel(results, text="Ortogonalizacion (Gram-Schmidt):",
                          font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
