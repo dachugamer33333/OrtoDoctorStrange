@@ -19,13 +19,13 @@ def crear_tab_matrices(tabview):
     ctk.CTkLabel(dim_frame, text="Dimension M\u2098\u2099:  m =",
                  font=ctk.CTkFont(size=14)).pack(side="left")
     m_var = ctk.StringVar(value="2")
-    m_menu = ctk.CTkOptionMenu(dim_frame, variable=m_var, values=["1", "2", "3", "4"], width=60)
-    m_menu.pack(side="left", padx=5)
+    m_entry = ctk.CTkEntry(dim_frame, textvariable=m_var, width=60)
+    m_entry.pack(side="left", padx=5)
     ctk.CTkLabel(dim_frame, text="n =",
                  font=ctk.CTkFont(size=14)).pack(side="left", padx=(10, 0))
     n_var = ctk.StringVar(value="2")
-    n_menu = ctk.CTkOptionMenu(dim_frame, variable=n_var, values=["1", "2", "3", "4"], width=60)
-    n_menu.pack(side="left", padx=5)
+    n_entry = ctk.CTkEntry(dim_frame, textvariable=n_var, width=60)
+    n_entry.pack(side="left", padx=5)
 
     ctk.CTkLabel(tab, text="Matrices (formato Python):",
                  font=ctk.CTkFont(size=14)).pack(anchor="w", padx=10, pady=(10, 0))
@@ -39,12 +39,28 @@ def crear_tab_matrices(tabview):
     results = ctk.CTkScrollableFrame(tab)
     results.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
+    def _bind_scroll(widget, canvas):
+        widget.bind("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+        widget.bind("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
+        widget.bind("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
+        for child in widget.winfo_children():
+            _bind_scroll(child, canvas)
+
     def diagnosticar():
         for w in results.winfo_children():
             w.destroy()
 
-        m = int(m_var.get())
-        n_val = int(n_var.get())
+        try:
+            m = int(m_var.get())
+            n_val = int(n_var.get())
+            if m < 1 or n_val < 1:
+                ctk.CTkLabel(results, text="Error: m y n deben ser enteros positivos.",
+                             text_color="red").pack(anchor="w")
+                return
+        except ValueError:
+            ctk.CTkLabel(results, text="Error: m y n deben ser numeros enteros.",
+                         text_color="red").pack(anchor="w")
+            return
 
         raw = input_text.get("1.0", "end-1c").strip()
         try:
@@ -100,6 +116,7 @@ def crear_tab_matrices(tabview):
         prop_row(prop_frame, 2, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
 
         if not base:
+            _bind_scroll(results, results._parent_canvas)
             return
 
         if not ort:
@@ -129,6 +146,8 @@ def crear_tab_matrices(tabview):
             ctk.CTkLabel(results,
                          text=f"  \u2714 Son ortonormales" if verif2 else f"  \u2718 No son ortonormales",
                          text_color=c_color2).pack(anchor="w")
+
+        _bind_scroll(results, results._parent_canvas)
 
     btn.configure(command=diagnosticar)
     return tab
