@@ -6,12 +6,8 @@ SUPER = {0: "\u2070", 1: "\u00b9", 2: "\u00b2", 3: "\u00b3", 4: "\u2074",
 
 
 def _sup(n):
-    if n == 0:
+    if n <= 1:
         return ""
-    if n == 1:
-        return ""
-    if n <= 3:
-        return {2: "\u00b2", 3: "\u00b3"}[n]
     return "".join(SUPER[int(d)] for d in str(n))
 
 
