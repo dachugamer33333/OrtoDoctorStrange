@@ -14,7 +14,7 @@ ctk.set_default_color_theme("blue")
 class VentanaPrincipal(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("DoctorStrange \u2014 \u00c1lgebra Lineal")
+        self.title("OrtoBasesDoctorStrange \u2014 \u00c1lgebra Lineal")
         self.geometry("940x700")
         self.minsize(800, 560)
 
@@ -26,7 +26,7 @@ class VentanaPrincipal(ctk.CTk):
         ctk.CTkLabel(header, text="\u00c1LGEBRA LINEAL",
                      font=ctk.CTkFont(size=17, weight="bold"),
                      text_color="#4a9eff").pack(side="left", padx=22, pady=14)
-        ctk.CTkLabel(header, text="DoctorStrange",
+        ctk.CTkLabel(header, text="OrtoBaseDoctorStrange",
                      font=ctk.CTkFont(size=11),
                      text_color="#555577").pack(side="right", padx=22)
 
