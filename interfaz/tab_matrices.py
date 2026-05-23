@@ -1,50 +1,90 @@
-import ast
+import re
 import numpy as np
 import customtkinter as ctk
 from logica import matrices as mat
+from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, bind_scroll
 
 
-def _fmt_matriz_compacto(M):
-    rows = []
-    for row in M:
-        rows.append("[" + " ".join(f"{x:7.4f}" for x in row) + "]")
-    return "  " + "\n  ".join(rows)
+def _fmt_matriz(M):
+    filas = ["[" + "  ".join(f"{x:7.4f}" for x in fila) + "]" for fila in M]
+    return "  " + "\n  ".join(filas)
+
+
+def _parsear_matrices(raw):
+    """Formato: [fila1; fila2]  una por línea o separadas por comas."""
+    bloques = re.findall(r'\[([^\[\]]+)\]', raw)
+    if not bloques:
+        raise ValueError("sin matrices")
+    matrices = []
+    for bloque in bloques:
+        filas_str = [f.strip() for f in bloque.split(';')]
+        matriz = []
+        for fila in filas_str:
+            vals = [float(x) for x in re.split(r'[,\s]+', fila.strip()) if x]
+            if not vals:
+                raise ValueError
+            matriz.append(vals)
+        matrices.append(matriz)
+    return matrices
+
+
+def _ejemplo_formato(m, n):
+    fila = " ".join(["0"] * n)
+    return "[" + "; ".join([fila] * m) + "]"
 
 
 def crear_tab_matrices(tabview):
     tab = tabview.add("Matrices")
 
-    dim_frame = ctk.CTkFrame(tab)
-    dim_frame.pack(fill="x", padx=10, pady=(10, 0))
-    ctk.CTkLabel(dim_frame, text="Dimension M\u2098\u2099:  m =",
-                 font=ctk.CTkFont(size=14)).pack(side="left")
+    # ── dimensión ────────────────────────────────────────────────────────────
+    df = ctk.CTkFrame(tab, fg_color="transparent")
+    df.pack(fill="x", padx=18, pady=(16, 0))
+    ctk.CTkLabel(df, text="Dimensión M\u2098\u2099  —  m =",
+                 font=ctk.CTkFont(size=13)).pack(side="left")
     m_var = ctk.StringVar(value="2")
-    m_entry = ctk.CTkEntry(dim_frame, textvariable=m_var, width=60)
-    m_entry.pack(side="left", padx=5)
-    ctk.CTkLabel(dim_frame, text="n =",
-                 font=ctk.CTkFont(size=14)).pack(side="left", padx=(10, 0))
+    ctk.CTkEntry(df, textvariable=m_var, width=60).pack(side="left", padx=8)
+    ctk.CTkLabel(df, text="n =",
+                 font=ctk.CTkFont(size=13)).pack(side="left", padx=(12, 0))
     n_var = ctk.StringVar(value="2")
-    n_entry = ctk.CTkEntry(dim_frame, textvariable=n_var, width=60)
-    n_entry.pack(side="left", padx=5)
+    ctk.CTkEntry(df, textvariable=n_var, width=60).pack(side="left", padx=8)
 
-    ctk.CTkLabel(tab, text="Matrices (formato Python):",
-                 font=ctk.CTkFont(size=14)).pack(anchor="w", padx=10, pady=(10, 0))
-    input_text = ctk.CTkTextbox(tab, height=70)
-    input_text.pack(fill="x", padx=10, pady=5)
-    input_text.insert("1.0", "[[1,0],[0,0]], [[1,1],[0,0]], [[1,1],[1,0]], [[1,1],[1,1]]")
+    # ── input ────────────────────────────────────────────────────────────────
+    ctk.CTkLabel(tab, text="Matrices  —  una por línea: [fila1; fila2; \u2026]",
+                 font=ctk.CTkFont(size=12), text_color=MUTED).pack(
+        anchor="w", padx=18, pady=(12, 2))
+    input_text = ctk.CTkTextbox(tab, height=100, corner_radius=8)
+    input_text.pack(fill="x", padx=18)
+    input_text.insert("1.0", "[1 0; 0 0]\n[1 1; 0 0]\n[1 1; 1 0]\n[1 1; 1 1]")
 
-    btn = ctk.CTkButton(tab, text="Diagnosticar")
-    btn.pack(pady=5)
+    hint_label = ctk.CTkLabel(tab, text="",
+                               font=ctk.CTkFont(size=10), text_color=MUTED)
+    hint_label.pack(anchor="w", padx=18, pady=(2, 0))
 
-    results = ctk.CTkScrollableFrame(tab)
-    results.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+    def actualizar_hint(*_):
+        try:
+            mv, nv = int(m_var.get()), int(n_var.get())
+            if mv > 0 and nv > 0:
+                hint_label.configure(
+                    text=f"Formato: {_ejemplo_formato(mv, nv)}   "
+                         f"  filas separadas por ';', valores por espacios o comas")
+        except ValueError:
+            pass
 
-    def _bind_scroll(widget, canvas):
-        widget.bind("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
-        widget.bind("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
-        widget.bind("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
-        for child in widget.winfo_children():
-            _bind_scroll(child, canvas)
+    m_var.trace_add("write", actualizar_hint)
+    n_var.trace_add("write", actualizar_hint)
+    actualizar_hint()
+
+    ctk.CTkLabel(tab, text="Ctrl+Enter para diagnosticar",
+                 font=ctk.CTkFont(size=10), text_color=MUTED).pack(
+        anchor="e", padx=18, pady=(2, 0))
+
+    btn = ctk.CTkButton(tab, text="Diagnosticar", height=40,
+                        font=ctk.CTkFont(size=13, weight="bold"),
+                        fg_color=ACCENT, hover_color="#2d7dd2")
+    btn.pack(pady=10, padx=18, fill="x")
+
+    results = ctk.CTkScrollableFrame(tab, fg_color="transparent", corner_radius=0)
+    results.pack(fill="both", expand=True, padx=18, pady=(0, 12))
 
     def diagnosticar():
         for w in results.winfo_children():
@@ -52,102 +92,95 @@ def crear_tab_matrices(tabview):
 
         try:
             m = int(m_var.get())
-            n_val = int(n_var.get())
-            if m < 1 or n_val < 1:
-                ctk.CTkLabel(results, text="Error: m y n deben ser enteros positivos.",
-                             text_color="red").pack(anchor="w")
-                return
+            nv = int(n_var.get())
+            if m < 1 or nv < 1:
+                raise ValueError
         except ValueError:
-            ctk.CTkLabel(results, text="Error: m y n deben ser numeros enteros.",
-                         text_color="red").pack(anchor="w")
+            ctk.CTkLabel(results, text="⚠  m y n deben ser enteros positivos.",
+                         text_color=RED).pack(anchor="w")
             return
 
         raw = input_text.get("1.0", "end-1c").strip()
         try:
-            matrices = ast.literal_eval("[" + raw + "]")
-            if not isinstance(matrices, list):
-                raise ValueError
-            if len(matrices) == 0:
-                raise ValueError("lista vacia")
-            if any(not isinstance(M, (list, tuple)) for M in matrices):
-                raise ValueError
+            matrices = _parsear_matrices(raw)
             arr = np.array(matrices, dtype=float)
-            if arr.ndim != 3 or arr.shape[0] < 1:
+            if arr.ndim != 3:
                 raise ValueError
-            if arr.shape[1] != m or arr.shape[2] != n_val:
+            if arr.shape[1] != m or arr.shape[2] != nv:
                 ctk.CTkLabel(results,
-                             text=f"Error: cada matriz debe ser {m}x{n_val}",
-                             text_color="red").pack(anchor="w")
+                             text=f"⚠  Cada matriz debe ser {m}×{nv}.",
+                             text_color=RED).pack(anchor="w")
                 return
-            d = mat.diagnosticar_matrices(arr, m, n_val)
-        except Exception:
-            ctk.CTkLabel(results, text="Error: formato invalido.",
-                         text_color="red").pack(anchor="w")
+        except (ValueError, TypeError):
+            ej = _ejemplo_formato(m, nv)
+            ctk.CTkLabel(results,
+                         text=f"⚠  Formato inválido.  Ejemplo: {ej}",
+                         text_color=RED).pack(anchor="w")
             return
 
+        try:
+            d = mat.diagnosticar_matrices(arr, m, nv)
+        except Exception as e:
+            ctk.CTkLabel(results, text=f"⚠  Error: {e}", text_color=RED).pack(anchor="w")
+            return
+
+        num = d["num"]
         rango, li, gen, base = d["rango"], d["li"], d["gen"], d["base"]
         ort, orton = d["ortogonal"], d["ortonormal"]
 
-        ctk.CTkLabel(results, text="Matrices dadas:",
-                     font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
+        ctk.CTkLabel(results,
+                     text=f"  {num} matri{'ces' if num != 1 else 'z'} en M{m}\u00d7{nv}",
+                     font=ctk.CTkFont(size=11), text_color=MUTED).pack(
+            anchor="w", pady=(4, 0))
+
+        seccion(results, "MATRICES DADAS")
         for i, M in enumerate(arr):
-            ctk.CTkLabel(results, text=f"  M{i + 1} = {_fmt_matriz_compacto(M)}",
+            ctk.CTkLabel(results, text=f"  M{i+1} = {_fmt_matriz(M)}",
                          font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
 
-        ctk.CTkLabel(results, text="").pack()
-        ctk.CTkLabel(results, text="Propiedades:",
-                     font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
-        prop_frame = ctk.CTkFrame(results)
-        prop_frame.pack(fill="x", pady=2)
+        seccion(results, "PROPIEDADES")
+        prop_card(results, [
+            ("Rango",         str(rango),         None),
+            ("Independiente", "✔" if li    else "✗", li),
+            ("Generador",     "✔" if gen   else "✗", gen),
+            ("Base",          "✔" if base  else "✗", base),
+            ("Ortogonal",     "✔" if ort   else "✗", ort),
+            ("Ortonormal",    "✔" if orton else "✗", orton),
+        ])
 
-        def prop_row(parent, row, col, label, value, ok):
-            f = ctk.CTkFrame(parent)
-            f.grid(row=row, column=col, padx=10, pady=2, sticky="w")
-            ctk.CTkLabel(f, text=f"{label}:", width=90, anchor="w").pack(side="left")
-            c = "#1a8a1a" if ok else "#cc3333"
-            ctk.CTkLabel(f, text=value, text_color=c,
-                         font=ctk.CTkFont(size=12, weight="bold")).pack(side="left")
+        if li:
+            seccion(results, "GRAM-SCHMIDT  (FROBENIUS)")
+            if ort:
+                ctk.CTkLabel(results, text="  ✔  El conjunto ya es ortogonal",
+                             text_color=GREEN, font=ctk.CTkFont(size=12)).pack(anchor="w")
+            else:
+                ortogonales = mat.ortogonalizar(arr)
+                for i, M in enumerate(ortogonales):
+                    ctk.CTkLabel(results, text=f"  Q{i+1} = {_fmt_matriz(M)}",
+                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                verif = mat.proseso_ortogonal(ortogonales)
+                ctk.CTkLabel(results,
+                             text="  ✔  Son ortogonales" if verif else "  ✗  No son ortogonales",
+                             text_color=GREEN if verif else RED,
+                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(6, 0))
 
-        prop_row(prop_frame, 0, 0, "Rango", str(rango), True)
-        prop_row(prop_frame, 0, 1, "L.I.", "\u2714" if li else "\u2718", li)
-        prop_row(prop_frame, 1, 0, "Generador", "\u2714" if gen else "\u2718", gen)
-        prop_row(prop_frame, 1, 1, "Base", "\u2714" if base else "\u2718", base)
-        prop_row(prop_frame, 2, 0, "Ortogonal", "\u2714" if ort else "\u2718", ort)
-        prop_row(prop_frame, 2, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
+            seccion(results, "ORTONORMALIZACIÓN")
+            if orton:
+                ctk.CTkLabel(results, text="  ✔  El conjunto ya es ortonormal",
+                             text_color=GREEN, font=ctk.CTkFont(size=12)).pack(anchor="w")
+            else:
+                ortonormales = mat.ortonormalizar(arr)
+                for i, M in enumerate(ortonormales):
+                    ctk.CTkLabel(results, text=f"  E{i+1} = {_fmt_matriz(M)}",
+                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                verif2 = mat.proseso_ortonormal(ortonormales, True)
+                ctk.CTkLabel(results,
+                             text="  ✔  Son ortonormales" if verif2 else "  ✗  No son ortonormales",
+                             text_color=GREEN if verif2 else RED,
+                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(6, 0))
 
-        if not base:
-            _bind_scroll(results, results._parent_canvas)
-            return
+        bind_scroll(results, results._parent_canvas)
 
-        if not ort:
-            ctk.CTkLabel(results, text="").pack()
-            ctk.CTkLabel(results, text="Ortogonalizacion (Gram-Schmidt con producto de Frobenius):",
-                         font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
-            ortogonales = mat.ortogonalizar(arr)
-            for i, M in enumerate(ortogonales):
-                ctk.CTkLabel(results, text=f"  Q{i + 1} = {_fmt_matriz_compacto(M)}",
-                             font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
-
-            verif = mat.proseso_ortogonal(ortogonales)
-            c_color = "#1a8a1a" if verif else "#cc3333"
-            ctk.CTkLabel(results,
-                         text=f"  \u2714 Son ortogonales" if verif else f"  \u2718 No son ortogonales",
-                         text_color=c_color).pack(anchor="w")
-
-            ctk.CTkLabel(results, text="Ortonormalizacion:",
-                         font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", pady=(5, 2))
-            ortonormales = mat.ortonormalizar(arr)
-            for i, M in enumerate(ortonormales):
-                ctk.CTkLabel(results, text=f"  E{i + 1} = {_fmt_matriz_compacto(M)}",
-                             font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
-
-            verif2 = mat.proseso_ortonormal(ortonormales, True)
-            c_color2 = "#1a8a1a" if verif2 else "#cc3333"
-            ctk.CTkLabel(results,
-                         text=f"  \u2714 Son ortonormales" if verif2 else f"  \u2718 No son ortonormales",
-                         text_color=c_color2).pack(anchor="w")
-
-        _bind_scroll(results, results._parent_canvas)
-
+    input_text.bind("<Control-Return>", lambda e: diagnosticar())
     btn.configure(command=diagnosticar)
     return tab

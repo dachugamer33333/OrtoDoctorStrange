@@ -23,14 +23,19 @@ def proseso_ortonormal(conjunto_vectores, ortogonal):
 
 
 def ortogonalizar(conjunto_vectores):
+    dim = np.array(conjunto_vectores[0]).shape[0]
     ortogonales = []
     for v in conjunto_vectores:
         w = np.array(v, dtype=float)
         for u in ortogonales:
-            w = w - (np.dot(w, u) / np.dot(u, u)) * u
-        ortogonales.append(w)
-    ortogonales = np.array(ortogonales)
-    return np.round(ortogonales, decimals=10)
+            norm_sq = np.dot(u, u)
+            if not np.isclose(norm_sq, 0):
+                w = w - (np.dot(w, u) / norm_sq) * u
+        if not np.allclose(w, 0):
+            ortogonales.append(w)
+    if not ortogonales:
+        return np.zeros((0, dim))
+    return np.round(np.array(ortogonales), decimals=10)
 
 
 def ortonormalizar(conjunto_vectores):
@@ -38,7 +43,10 @@ def ortonormalizar(conjunto_vectores):
     ortonormales = []
     for v in ortogonales:
         norma = np.linalg.norm(v)
-        ortonormales.append(v / norma)
+        if not np.isclose(norma, 0):
+            ortonormales.append(v / norma)
+    if not ortonormales:
+        return np.zeros((0, ortogonales.shape[1]))
     return np.round(np.array(ortonormales), decimals=10)
 
 

@@ -2,7 +2,7 @@ import numpy as np
 
 
 def producto_interno(A, B):
-    return np.vdot(A, B)
+    return np.sum(A * B)
 
 
 def proseso_ortogonal(conjunto_matrices):
@@ -27,14 +27,19 @@ def proseso_ortonormal(conjunto_matrices, ortogonal):
 
 
 def ortogonalizar(conjunto_matrices):
+    shape = np.array(conjunto_matrices[0]).shape
     ortogonales = []
     for M in conjunto_matrices:
         W = np.array(M, dtype=float)
         for U in ortogonales:
-            W = W - (producto_interno(W, U) / producto_interno(U, U)) * U
-        ortogonales.append(W)
-    ortogonales = np.array(ortogonales)
-    return np.round(ortogonales, decimals=10)
+            norm_sq = producto_interno(U, U)
+            if not np.isclose(norm_sq, 0):
+                W = W - (producto_interno(W, U) / norm_sq) * U
+        if not np.allclose(W, 0):
+            ortogonales.append(W)
+    if not ortogonales:
+        return np.zeros((0, *shape))
+    return np.round(np.array(ortogonales), decimals=10)
 
 
 def ortonormalizar(conjunto_matrices):
@@ -42,7 +47,10 @@ def ortonormalizar(conjunto_matrices):
     ortonormales = []
     for M in ortogonales:
         norma = np.linalg.norm(M, 'fro')
-        ortonormales.append(M / norma)
+        if not np.isclose(norma, 0):
+            ortonormales.append(M / norma)
+    if not ortonormales:
+        return np.zeros((0, *ortogonales.shape[1:]))
     return np.round(np.array(ortonormales), decimals=10)
 
 
