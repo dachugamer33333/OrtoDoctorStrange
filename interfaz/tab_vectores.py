@@ -20,6 +20,13 @@ def crear_tab_vectores(tabview):
     results = ctk.CTkScrollableFrame(tab)
     results.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
+    def _bind_scroll(widget, canvas):
+        widget.bind("<MouseWheel>", lambda e: canvas.yview_scroll(int(-1*(e.delta/120)), "units"))
+        widget.bind("<Button-4>", lambda e: canvas.yview_scroll(-1, "units"))
+        widget.bind("<Button-5>", lambda e: canvas.yview_scroll(1, "units"))
+        for child in widget.winfo_children():
+            _bind_scroll(child, canvas)
+
     def diagnosticar():
         for w in results.winfo_children():
             w.destroy()
@@ -64,6 +71,7 @@ def crear_tab_vectores(tabview):
         prop_row(prop_frame, 2, 1, "Ortonormal", "\u2714" if orton else "\u2718", orton)
 
         if not base:
+            _bind_scroll(results, results._parent_canvas)
             return
 
         if not ort:
@@ -92,6 +100,8 @@ def crear_tab_vectores(tabview):
             c_color2 = "#1a8a1a" if verif2 else "#cc3333"
             ctk.CTkLabel(results, text=f"  \u2714 Son ortonormales" if verif2 else f"  \u2718 No son ortonormales",
                          text_color=c_color2).pack(anchor="w")
+
+        _bind_scroll(results, results._parent_canvas)
 
     btn.configure(command=diagnosticar)
     return tab
