@@ -2,7 +2,7 @@ import re
 import numpy as np
 import customtkinter as ctk
 from logica import matrices as mat
-from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, bind_scroll
+from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, vec_card, bind_scroll
 
 
 def _fmt_matriz(M):
@@ -156,13 +156,13 @@ def crear_tab_matrices(tabview):
             else:
                 ortogonales = mat.ortogonalizar(arr)
                 for i, M in enumerate(ortogonales):
-                    ctk.CTkLabel(results, text=f"  Q{i+1} = {_fmt_matriz(M)}",
-                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                    vec_card(results, f"Q{i+1}", _fmt_matriz(M),
+                             np.linalg.norm(M, 'fro'), "‖·‖F")
                 verif = mat.proseso_ortogonal(ortogonales)
                 ctk.CTkLabel(results,
                              text="  ✔  Son ortogonales" if verif else "  ✗  No son ortogonales",
                              text_color=GREEN if verif else RED,
-                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(6, 0))
+                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(4, 0))
 
             seccion(results, "ORTONORMALIZACIÓN")
             if orton:
@@ -171,8 +171,8 @@ def crear_tab_matrices(tabview):
             else:
                 ortonormales = mat.ortonormalizar(arr)
                 for i, M in enumerate(ortonormales):
-                    ctk.CTkLabel(results, text=f"  E{i+1} = {_fmt_matriz(M)}",
-                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                    vec_card(results, f"E{i+1}", _fmt_matriz(M),
+                             np.linalg.norm(M, 'fro'), "‖·‖F")
                 verif2 = mat.proseso_ortonormal(ortonormales, True)
                 ctk.CTkLabel(results,
                              text="  ✔  Son ortonormales" if verif2 else "  ✗  No son ortonormales",

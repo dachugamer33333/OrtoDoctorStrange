@@ -2,7 +2,7 @@ import ast
 import numpy as np
 import customtkinter as ctk
 from logica import vectores as vec
-from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, bind_scroll
+from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, vec_card, bind_scroll
 
 
 def crear_tab_vectores(tabview):
@@ -102,13 +102,13 @@ def crear_tab_vectores(tabview):
             else:
                 ortogonales = vec.ortogonalizar(matriz)
                 for i, v in enumerate(ortogonales):
-                    ctk.CTkLabel(results, text=f"  q{i+1} = {np.round(v, 4)}",
-                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                    vec_card(results, f"q{i+1}", str(np.round(v, 4)),
+                             np.linalg.norm(v), "‖·‖")
                 verif = vec.proseso_ortogonal(ortogonales)
                 ctk.CTkLabel(results,
                              text="  ✔  Son ortogonales" if verif else "  ✗  No son ortogonales",
                              text_color=GREEN if verif else RED,
-                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(6, 0))
+                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(4, 0))
 
             seccion(results, "ORTONORMALIZACIÓN")
             if orton:
@@ -117,13 +117,13 @@ def crear_tab_vectores(tabview):
             else:
                 ortonormales = vec.ortonormalizar(matriz)
                 for i, v in enumerate(ortonormales):
-                    ctk.CTkLabel(results, text=f"  e{i+1} = {np.round(v, 4)}",
-                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                    vec_card(results, f"e{i+1}", str(np.round(v, 4)),
+                             np.linalg.norm(v), "‖·‖")
                 verif2 = vec.proseso_ortonormal(ortonormales, True)
                 ctk.CTkLabel(results,
                              text="  ✔  Son ortonormales" if verif2 else "  ✗  No son ortonormales",
                              text_color=GREEN if verif2 else RED,
-                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(6, 0))
+                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(4, 0))
 
         bind_scroll(results, results._parent_canvas)
 

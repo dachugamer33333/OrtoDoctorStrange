@@ -3,7 +3,7 @@ import numpy as np
 import customtkinter as ctk
 from logica import vectores as vec
 from logica.polinomios import vector_a_polinomio, diagnosticar_polinomios
-from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, bind_scroll
+from interfaz.componentes import ACCENT, GREEN, RED, MUTED, seccion, prop_card, vec_card, bind_scroll
 
 
 def crear_tab_polinomios(tabview):
@@ -111,13 +111,13 @@ def crear_tab_polinomios(tabview):
             else:
                 ortogonales = vec.ortogonalizar(matriz)
                 for i, p in enumerate(ortogonales):
-                    ctk.CTkLabel(results, text=f"  q{i+1}(x) = {vector_a_polinomio(p)}",
-                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                    vec_card(results, f"q{i+1}(x)", vector_a_polinomio(p),
+                             np.linalg.norm(p), "‖·‖")
                 verif = vec.proseso_ortogonal(ortogonales)
                 ctk.CTkLabel(results,
                              text="  ✔  Son ortogonales" if verif else "  ✗  No son ortogonales",
                              text_color=GREEN if verif else RED,
-                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(6, 0))
+                             font=ctk.CTkFont(size=12)).pack(anchor="w", pady=(4, 0))
 
             seccion(results, "ORTONORMALIZACIÓN")
             if orton:
@@ -126,8 +126,9 @@ def crear_tab_polinomios(tabview):
             else:
                 ortonormales = vec.ortonormalizar(matriz)
                 for i, p in enumerate(ortonormales):
-                    ctk.CTkLabel(results, text=f"  e{i+1}(x) = {vector_a_polinomio(p)}",
-                                 font=ctk.CTkFont(family="Courier", size=12)).pack(anchor="w")
+                    vec_card(results, f"e{i+1}(x)", vector_a_polinomio(p),
+                             np.linalg.norm(p), "‖·‖")
+
                 verif2 = vec.proseso_ortonormal(ortonormales, True)
                 ctk.CTkLabel(results,
                              text="  ✔  Son ortonormales" if verif2 else "  ✗  No son ortonormales",
