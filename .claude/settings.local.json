@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c \"import reportlab\")",
+      "Bash(source .venv/bin/activate)",
+      "Bash(python3 -c \":*)"
+    ]
+  }
+}
